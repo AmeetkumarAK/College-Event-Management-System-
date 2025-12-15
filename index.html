@@ -1,1 +1,272 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>College Event Management</title>
+  <style>
+  body {
+    font-family: Arial, sans-serif;
+    background: linear-gradient(to right, #e3f2fd, #fce4ec);
+    margin: 0;
+    padding: 20px;
+  }
+
+  h2 {
+    text-align: center;
+    color: #2c3e50;
+  }
+
+  h3 {
+    color: #34495e;
+    margin-top: 30px;
+  }
+
+  form {
+    background: white;
+    padding: 15px;
+    border-radius: 10px;
+    width: 60%;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    margin-bottom: 20px;
+  }
+
+  input {
+    padding: 8px;
+    margin: 6px;
+    width: 40%;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+  }
+
+  button {
+    padding: 8px 15px;
+    border: none;
+    border-radius: 6px;
+    background: #3498db;
+    color: white;
+    cursor: pointer;
+    font-weight: bold;
+  }
+
+  button:hover {
+    background: #2980b9;
+  }
+
+  #adminMsg {
+    font-weight: bold;
+    margin-top: 5px;
+  }
+
+  table {
+    border-collapse: collapse;
+    width: 90%;
+    background: white;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  }
+
+  th {
+    background: #2c3e50;
+    color: white;
+    padding: 10px;
+  }
+
+  td {
+    padding: 8px;
+    text-align: center;
+  }
+
+  tr:nth-child(even) {
+    background: #f2f2f2;
+  }
+
+  tr:hover {
+    background: #dff9fb;
+  }
+
+  hr {
+    margin: 30px 0;
+  }
+
+  .card {
+  background: white;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 6px 12px rgba(0,0,0,0.1);
+  margin-bottom: 25px;
+}
+
+    
+  </style>
+</head>
+<body>
+
+<h2>College Event Management Sytem</h2>
+
+<h3 style="color:#c0392b;">🔐 Admin Login</h3>
+
+<input type="password" id="adminPassword" placeholder="Enter Admin Password" />
+<button onclick="checkAdmin()">Login</button>
+<p id="adminMsg" style="color:red;"></p>
+
+
+<h3>📅 Add New Event</h3>
+
+<form id="eventForm" style="display:none;">
+
+  <input type="number" id="event_id" placeholder="Event ID" required />
+  <input type="text" id="event_name" placeholder="Event Name" required />
+  <input type="date" id="event_date" required />
+  <input type="text" id="location" placeholder="Location(Optional)" />
+  <button type="submit" id="addEventBtn" disabled>Add Event</button>
+
+</form>
+
+<h3>👨‍🎓 Add Student</h3>
+<form id="studentForm">
+  <input type="number" id="student_id" placeholder="Student ID" required />
+  <input type="text" id="student_name" placeholder="Student Name" required />
+  <input type="text" id="department" placeholder="Department" required />
+  <input type="email" id="email" placeholder="Email" required />
+  <button type="submit">Add Student</button>
+</form>
+
+<h3>📝 Register Student for Event</h3>
+<form id="registrationForm">
+  <input type="number" id="reg_id" placeholder="Registration ID" required />
+  <input type="number" id="reg_student_id" placeholder="Student ID" required />
+  <input type="number" id="reg_event_id" placeholder="Event ID" required />
+  <button type="submit">Register</button>
+</form>
+
+<hr>
+
+<table>
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Event Name</th>
+      <th>Date</th>
+      <th>Location</th>
+    </tr>
+  </thead>
+  <tbody id="eventsTable"></tbody>
+</table>
+
+<!-- ================= JS START ================= -->
+
+<script>
+  function checkAdmin() {
+  const pass = document.getElementById("adminPassword").value;
+
+
+  if (pass === "admin123") { 
+    document.getElementById("addEventBtn").disabled = false;
+  // 🔐 Admin password
+    document.getElementById("eventForm").style.display = "block";
+    document.getElementById("adminMsg").innerText = "Admin access granted";
+    document.getElementById("adminMsg").style.color = "green";
+  } else {
+    document.getElementById("adminMsg").innerText = "Wrong password";
+    document.getElementById("adminMsg").style.color = "red";
+  }
+}
+
+function loadEvents() {
+  fetch("http://localhost:5000/events")
+    .then(res => res.json())
+    .then(data => {
+      const table = document.getElementById("eventsTable");
+      table.innerHTML = "";
+
+      data.forEach(event => {
+        table.innerHTML += `
+          <tr>
+            <td>${event.event_id}</td>
+            <td>${event.event_name}</td>
+            <td>${new Date(event.event_date).toLocaleDateString()}</td>
+            <td>${event.location || "-"}</td>
+
+
+
+          </tr>
+        `;
+      });
+    });
+}
+
+loadEvents();
+
+/* ADD EVENT */
+document.getElementById("eventForm").addEventListener("submit", function(e) {
+  e.preventDefault();
+
+  const eventData = {
+    event_id: document.getElementById("event_id").value,
+    event_name: document.getElementById("event_name").value,
+    event_date: document.getElementById("event_date").value,
+    location: document.getElementById("location").value
+  };
+
+  console.log(eventData); // ✅ CHECK THIS
+
+  fetch("http://localhost:5000/events", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(eventData)
+  })
+  .then(res => res.json())
+  .then(() => {
+    alert("Event added");
+    loadEvents();
+    document.getElementById("eventForm").reset();
+  });
+});
+
+/* ADD STUDENT */
+document.getElementById("studentForm").addEventListener("submit", function(e) {
+  e.preventDefault();
+
+  fetch("http://localhost:5000/students", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      student_id: student_id.value,
+      name: student_name.value,
+      department: department.value,
+      email: email.value
+    })
+  })
+  .then(res => res.json())
+  .then(() => {
+    alert("Student added");
+    studentForm.reset();
+  });
+});
+
+/* REGISTER */
+document.getElementById("registrationForm").addEventListener("submit", function(e) {
+  e.preventDefault();
+
+  fetch("http://localhost:5000/register", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      reg_id: reg_id.value,
+      student_id: reg_student_id.value,
+      event_id: reg_event_id.value
+    })
+  })
+  .then(res => res.json())
+  .then(() => {
+    alert("Registered");
+    registrationForm.reset();
+  });
+});
+</script>
+
+<!-- ================= JS END ================= -->
+
+</body>
+</html>
 
